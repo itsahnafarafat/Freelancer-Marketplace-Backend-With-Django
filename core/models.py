@@ -1,21 +1,15 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.conf import settings
 
 class User(AbstractUser):
     pass
 
-class FreelanceProfile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    skills = models.TextField(blank=True)
-    experience = models.PositiveIntegerField(default=0)
+class FreelancerProfile(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    skills = models.TextField()
+    experience = models.IntegerField()
+    bio = models.TextField()
 
     def __str__(self):
-        return self.user.username
-
-class ClientProfile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    company_name = models.CharField(max_length=100)
-    website = models.URLField(blank=True)
-
-    def __str__(self):
-        return self.user.username
+        return f"{self.user.username}'s profile"
