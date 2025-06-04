@@ -1,41 +1,36 @@
-from rest_framework import generics, status
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
-from django.contrib.auth import login
-from .serializers import (
-    RegisterSerializer,
-    LoginSerializer,
-    FreelancerProfileSerializer,
-    ClientProfileSerializer
-)
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
 from .models import FreelancerProfile, ClientProfile
+from .serializers import FreelancerProfileSerializer, ClientProfileSerializer
 
-# Registration
-class RegisterView(generics.CreateAPIView):
-    serializer_class = RegisterSerializer
-
-# Login
-class LoginView(APIView):
-    def post(self, request):
-        serializer = LoginSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = serializer.validated_data
-        login(request, user)
-        return Response({"message": "Login successful"}, status=status.HTTP_200_OK)
-    
-# Freelancer profile creation
-class FreelanceProfileView(generics.CreateAPIView):
-    serializer_class = FreelancerProfileSerializer
+class FreelancerProfileView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+    def post(self, request):
+        if request.user.role != 'freelancer':
+            return Response(
+                {"error": "Only freelancers can create a freelancer profile."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        serializer = FreelancerProfileSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(user=request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class ClientProfileView(APIView):
+    permission_classes = [IsAuthenticated]
 
-# Client profile creation
-class ClientProfileView(generics.CreateAPIView):
-    serializer_class = ClientProfileSerializer
-    permission_classes =[IsAuthenticated]
-
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+    def post(self, request):
+        if request.user.role !='client':
+            return Response(
+                {"error": "Only clients can create a client profile"}
+                status=status.HTTP_403_FORBIDDEN
+            )
+        serializer = ClientProfileSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(user=request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
