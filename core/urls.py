@@ -1,14 +1,11 @@
-from django.urls import path
-from .views import (
-    JobPostListCreateView,
-    JobPostDetailView,
-    ApplicationCreateView,
-    ApplicationListView,
-)
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from .views import JobPostViewSet, ApplicationViewSet
+
+router = DefaultRouter()
+router.register('jobs', JobPostViewSet, basename='jobpost')
+router.register('applications', ApplicationViewSet, basename='application')
 
 urlpatterns = [
-    path('jobs/', JobPostListCreateView.as_view(), name='job-list-create'),
-    path('jobs/<int:pk>/', JobPostDetailView.as_view(), name='job-detail'),
-    path('jobs/<int:pk>/apply/', ApplicationCreateView.as_view(), name='job-apply'),
-    path('applications/', ApplicationListView.as_view(), name='application-list'),
+    path('', include(router.urls)),
 ]
