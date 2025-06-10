@@ -1,35 +1,33 @@
-from rest_framework import generics, permissions
+from rest_framework import viewsets
+from rest_framework.permissions import IsAuthenticated
+
 from .models import JobPost, Application
 from .serializers import JobPostSerializer, ApplicationSerializer
+from .permissions import IsClient, IsFreelancer, IsOwnerOrReadOnly
 
-# ✅ View to list and create job posts (only for clients)
-class JobPostListCreateView(generics.ListCreateAPIView):
+class JobPostViewSet(viewsets.ModelViewSet):
     queryset = JobPost.objects.all()
     serializer_class = JobPostSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
+    def get_permissions(self):
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            return [IsClient()]
+        return [IsAuthenticated()]
+    
     def perform_create(self, serializer):
         serializer.save(client=self.request.user)
 
-# ✅ View to retrieve, update, delete a single job post
-class JobPostDetailView(generics.RetrieveUpdateDestroyAPIView):
+
+class ApplicationViewSet(viewsets.ModelViewSet):
     queryset = Application.objects.all()
     serializer_class = ApplicationSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
-# ✅ View for freelancers to apply to a job
-class ApplicationCreateView(generics.CreateAPIView):
-    queryset = Application.objects.all()
-    serializer_class = ApplicationSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
+    def get_permissions(self):
+        if self.action == 'create':
+            return [IsFreelancer()]
+        return [IsAuthenticated()]
+    
     def perform_create(self, serializer):
         serializer.save(freelancer=self.request.user)
-
-# ✅ View for client to see all applications for their job post
-class ApplicationListView(generics.ListAPIView):
-    serializer_class = ApplicationSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        return Application.objects.filter(job__client=self.request.user)
