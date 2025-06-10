@@ -1,14 +1,14 @@
 from django.urls import path
 from .views import (
-    FreelancerProfileView,
-    ClientProfileView,
-    FreelancerDashboardView,
-    ClientDashboardView,
+    JobPostListCreateView,
+    JobPostDetailView,
+    ApplicationCreateView,
+    ApplicationListView,
 )
 
 urlpatterns = [
-    path('freelancer/profile/', FreelancerProfileView.as_view(), name='freelancer-profile'),
-    path('client/profile/', ClientProfileView.as_view(), name='client-profile'),
-    path('freelancer/dashboard/', FreelancerDashboardView.as_view(), name='freelancer-dashboard'),
-    path('client/dashboard/', ClientDashboardView.as_view(), name='client-dashboard'),
+    path('jobs/', JobPostListCreateView.as_view(), name='job-list-create'),
+    path('jobs/<int:pk>/', JobPostDetailView.as_view(), name='job-detail'),
+    path('jobs/<int:pk>/apply/', ApplicationCreateView.as_view(), name='job-apply'),
+    path('applications/', ApplicationListView.as_view(), name='application-list'),
 ]

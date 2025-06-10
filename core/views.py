@@ -1,68 +1,35 @@
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
-from .models import FreelancerProfile, ClientProfile
-from .serializers import FreelancerProfileSerializer, ClientProfileSerializer
+from rest_framework import generics, permissions
+from .models import JobPost, Application
+from .serializers import JobPostSerializer, ApplicationSerializer
 
-# Freelance Profile
-class FreelancerProfileView(APIView):
-    permission_classes = [IsAuthenticated]
+# ✅ View to list and create job posts (only for clients)
+class JobPostListCreateView(generics.ListCreateAPIView):
+    queryset = JobPost.objects.all()
+    serializer_class = JobPostSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
-    def post(self, request):
-        if request.user.role != 'freelancer':
-            return Response(
-                {"error": "Only users with role 'freelancer' can create a freelancer profile."},
-                status=status.HTTP_403_FORBIDDEN
-            )
-        serializer = FreelancerProfileSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save(user=request.user)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def perform_create(self, serializer):
+        serializer.save(client=self.request.user)
 
-# Client Profile
-class ClientProfileView(APIView):
-    permission_classes = [IsAuthenticated]
+# ✅ View to retrieve, update, delete a single job post
+class JobPostDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Application.objects.all()
+    serializer_class = ApplicationSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
-    def post(self, request):
-        if request.user.role != 'client':
-            return Response(
-                {"error": "Only users with role 'client' can create a client profile."},
-                status=status.HTTP_403_FORBIDDEN
-            )
-        serializer = ClientProfileSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save(user=request.user)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+# ✅ View for freelancers to apply to a job
+class ApplicationCreateView(generics.CreateAPIView):
+    queryset = Application.objects.all()
+    serializer_class = ApplicationSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
-# Freelance Dashboard
-class FreelancerDashboardView(APIView):
-    permission_classes = [IsAuthenticated]
+    def perform_create(self, serializer):
+        serializer.save(freelancer=self.request.user)
 
-    def get(self, request):
-        if request.user.role != 'freelancer':
-            return Response(
-                {"error": "Only freelancers can create a freelancer profile."},
-                status=status.HTTP_403_FORBIDDEN
-            )
-        return Response(
-            {"message": f"Welcome to the Freelancer Dashboard, {request.user.email}!"},
-            status=status.HTTP_200_OK
-        )
+# ✅ View for client to see all applications for their job post
+class ApplicationListView(generics.ListAPIView):
+    serializer_class = ApplicationSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
-# Client Dashboard
-class ClientDashboardView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        if request.user.role !='client':
-            return Response(
-                {"error": "Only clients can create a client profile"}
-                status=status.HTTP_403_FORBIDDEN
-            )
-        return Response(
-            {"message": f"Welcome to the Client Dashboard, {request.user.email}!"},
-            status=status.HTTP_200_OK
-        )
+    def get_queryset(self):
+        return Application.objects.filter(job__client=self.request.user)
