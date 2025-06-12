@@ -1,21 +1,20 @@
 from rest_framework import serializers
-from .models import JobPost, Application
 from django.contrib.auth import get_user_model
+from .models import JobPost, Application
 
 User = get_user_model()
 
-class JobPostSerializer(serializers.ModelSerializer):
-    client = serializers.StringRelatedField(read_only=True)
-
+class UserSerializer(serializers.ModelSerializer):
     class Meta:
-        model = JobPost
-        fields = '__all__'
+        model = User
+        fields = ['id', 'username', 'email', 'password', 'role']
+        extra_kwargs = {'password': {'write_only': True}}
 
-class ApplicationSerializer(serializers.ModelSerializer):
-    freelancer = serializers.StringRelatedField(read_only=True)
-    job = serializers.StringRelatedField(read_only=True)
-
-    class Meta:
-        model = Application
-        fields = '__all__'
-
+    def create(self, validated_data):
+        user = User.objects.create_user(
+            username=validated_data['username'],
+            email=validated_data.get('email', ''),
+            password=validated_data['password'],
+            role=validated_data['role']
+        )
+        return user
