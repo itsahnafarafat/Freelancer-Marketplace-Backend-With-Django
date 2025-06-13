@@ -1,5 +1,16 @@
+from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.conf import settings
+
+class User(AbstractUser):
+    ROLE_CHOICES = (
+        ('client', 'Client'),
+        ('freelancer', 'Freelancer'),
+    )
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='freelancer')
+
+    def __str__(self):
+        return f"{self.username} ({self.role})"
 
 class JobPost(models.Model):
     client = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
