@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: freelancer-backend
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn freelance_backend.wsgi:application
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: freelance_backend.settings
+      - key: SECRET_KEY
+        value: YOUR_SECRET_KEY
